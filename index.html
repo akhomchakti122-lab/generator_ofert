@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Generator Ofert</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #d576d2, #8d3cde);
+            margin: 0;
+            text-align: center;
+        }
+
+        h1 {
+            color: white;
+            margin-top: 30px;
+        }
+
+        .container {
+            background: rgba(235, 82, 238, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            margin: 30px auto;
+            width: 90%;
+            max-width: 520px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(195, 71, 71, 0.2);
+        }
+
+        /* INPUT */
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+        }
+
+        /* SERVICES */
+        .services {
+            margin-bottom: 15px;
+        }
+
+        /* LABEL jako flex (tekst lewo, checkbox prawo) */
+        label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 6px 0;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: white;
+        }
+
+        label:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* checkbox na prawo */
+        input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        /* BUTTON */
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: #da34f4;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #6300a9;
+            transform: scale(1.03);
+        }
+
+        /* PRICE */
+        #price {
+            font-size: 24px;
+            color: #ffea00;
+        }
+
+        /* OFFERS */
+        .offer {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 10px;
+            color: white;
+            text-align: left;
+            word-wrap: break-word;
+        }
+
+        .offer button {
+            background: #ff4d4d;
+        }
+
+        .offer button:hover {
+            background: #cc0000;
+        }
+
+        /* zabezpieczenie przed poziomym scrollem */
+        body {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Generator Ofert</h1>
+
+    <div class="container">
+
+        <input type="text" id="client" placeholder="Nazwa klienta">
+
+        <h3 style="color:rgb(245, 245, 245);">Wybierz usługi:</h3>
+
+        <div class="services">
+
+            <label>Strona WWW (1000 zł) <input type="checkbox" class="service" value="1000"></label>
+            <label>Sklep internetowy (1500 zł) <input type="checkbox" class="service" value="1500"></label>
+            <label>Logo (500 zł) <input type="checkbox" class="service" value="500"></label>
+            <label>Wizytówka (300 zł) <input type="checkbox" class="service" value="300"></label>
+            <label>SEO (800 zł) <input type="checkbox" class="service" value="800"></label>
+            <label>Optymalizacja strony (400 zł) <input type="checkbox" class="service" value="400"></label>
+            <label>Social Media (700 zł) <input type="checkbox" class="service" value="700"></label>
+            <label>Aplikacja webowa (1200 zł) <input type="checkbox" class="service" value="1200"></label>
+
+        </div>
+
+        <h3 style="color:white;">Cena: <span id="price">0</span> zł</h3>
+
+        <button id="generate">Generuj ofertę</button>
+
+        <h2 style="color:white;">Zapisane oferty:</h2>
+        <div id="offers"></div>
+
+    </div>
+
+    <script>
+        class Offer {
+            constructor(client, services, price) {
+                this.id = Date.now();
+                this.client = client;
+                this.services = services;
+                this.price = price;
+            }
+        }
+
+        class App {
+            constructor() {
+                this.offers = JSON.parse(localStorage.getItem("offers")) || [];
+
+                this.clientInput = document.getElementById("client");
+                this.priceEl = document.getElementById("price");
+                this.services = document.getElementsByClassName("service");
+                this.offersBox = document.querySelector("#offers");
+
+                document.getElementById("generate")
+                    .addEventListener("click", () => this.createOffer());
+
+                Array.from(this.services).forEach(s =>
+                    s.addEventListener("change", () => this.calculate())
+                );
+
+                this.render();
+            }
+
+            calculate() {
+                let total = 0;
+
+                Array.from(this.services).forEach(s => {
+                    if (s.checked) total += Number(s.value);
+                });
+
+                this.priceEl.textContent = total;
+            }
+
+            createOffer() {
+                const client = this.clientInput.value.trim();
+
+                if (!client) {
+                    alert("Podaj nazwę klienta!");
+                    return;
+                }
+
+                const selected = [];
+
+                Array.from(this.services).forEach(s => {
+                    if (s.checked) {
+                        selected.push(s.parentElement.textContent.trim());
+                    }
+                });
+
+                const price = Number(this.priceEl.textContent);
+
+                const offer = new Offer(client, selected, price);
+                this.offers.push(offer);
+
+                localStorage.setItem("offers", JSON.stringify(this.offers));
+
+                this.render();
+                this.resetForm();
+            }
+
+            deleteOffer(id) {
+                this.offers = this.offers.filter(o => o.id !== id);
+                localStorage.setItem("offers", JSON.stringify(this.offers));
+                this.render();
+            }
+
+            resetForm() {
+                this.clientInput.value = "";
+                this.priceEl.textContent = "0";
+                Array.from(this.services).forEach(s => s.checked = false);
+            }
+
+            render() {
+                this.offersBox.innerHTML = "";
+
+                this.offers.forEach(o => {
+                    const div = document.createElement("div");
+                    div.className = "offer";
+
+                    div.innerHTML = `
+                <strong>${o.client}</strong><br>
+                ${o.services.join(", ")}<br>
+                ${o.price} zł
+                <br>
+                <button>Usuń</button>
+            `;
+
+                    div.querySelector("button")
+                        .addEventListener("click", () => this.deleteOffer(o.id));
+
+                    this.offersBox.appendChild(div);
+                });
+            }
+        }
+
+        new App();
+    </script>
+
+</body>
+
+</html>
